@@ -20,7 +20,7 @@ export default function PackageDetail() {
         if (!res.ok) throw new Error("failed to fetch package");
         const data = await res.json();
         setPkg(data);
-        console.log('data:', data)
+        console.log("data:", data);
       } catch (err) {
         console.error("Error fetching package:", err);
       } finally {
@@ -60,7 +60,7 @@ export default function PackageDetail() {
             }
             className="card-img-top"
             alt={pkg.title}
-            style={{height:400, objectFit:'contain'}}
+            style={{ height: 400, objectFit: "contain" }}
           />
         )}
         <div className="card-body">
@@ -78,7 +78,12 @@ export default function PackageDetail() {
             </div>
           )}
 
-          <button className="btn btn-primary mt-3">Book Now</button>
+          <Link
+            href={`/bookings/new?packageId=${pkg.id}`}
+            className="btn btn-primary mt-3"
+          >
+            Book Now
+          </Link>
         </div>
       </div>
     </div>
