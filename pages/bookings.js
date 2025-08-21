@@ -1,9 +1,19 @@
+import { useAuth } from "@/contexts/AuthContext";
 import axios from "axios";
+import { useRouter } from "next/router";
 import { useEffect, useState } from "react";
 
 export default function MyBookings() {
   const [bookings, setBookings] = useState([]);
   const [loading, setLoading] = useState(true);
+  const { isLoggedIn } = useAuth();
+  const router = useRouter();
+
+  useEffect(() => {
+    if (!isLoggedIn) {
+      router.push("/login");
+    }
+  }, [isLoggedIn]);
 
   useEffect(() => {
     const fetchBookings = async () => {
@@ -14,9 +24,12 @@ export default function MyBookings() {
             Authorization: `Bearer ${token}`,
           },
         });
-        setBookings(res.data.results);
+        setBookings(res.data.results || res.data);
       } catch (err) {
         console.error("Error fetching bookings:", err);
+        if (err.response?.status === 401) {
+          router.push("/login");
+        }
       } finally {
         setLoading(false);
       }
@@ -80,6 +93,45 @@ export default function MyBookings() {
                       year: "numeric",
                     })}
                   </p>
+                  <p className="card-text mb-2">
+                    <strong>Travel Date:</strong>{" "}
+                    {new Date(booking.travel_date).toLocaleDateString("en-IN", {
+                      day: "2-digit",
+                      month: "short",
+                      year: "numeric",
+                    })}
+                  </p>
+                  {booking.status.toLowerCase() === "pending" && (
+                    <button
+                      className="btn btn-sm btn-outline-danger"
+                      onClick={async () => {
+                        try {
+                          await axios.patch(
+                            `http://127.0.0.1:8000/api/bookings/${booking.id}/`,
+                            { status: "cancelled" },
+                            {
+                              headers: {
+                                Authorization: `Bearer ${localStorage.getItem(
+                                  "access"
+                                )}`,
+                              },
+                            }
+                          );
+                          setBookings((prev) =>
+                            prev.map((b) =>
+                              b.id === booking.id
+                                ? { ...b, status: "cancelled" }
+                                : b
+                            )
+                          );
+                        } catch (err) {
+                          console.error("Error cancelling booking:", err);
+                        }
+                      }}
+                    >
+                      Cancel Booking
+                    </button>
+                  )}
                 </div>
               </div>
             </div>

@@ -1,6 +1,9 @@
 import Link from "next/link";
+import { useAuth } from "@/contexts/AuthContext";
 
 export default function Layout({ children }) {
+  const { isLoggedIn, logout } = useAuth();
+
   return (
     <>
       <nav className="navbar navbar-expand-lg navbar-dark bg-dark">
@@ -16,6 +19,7 @@ export default function Layout({ children }) {
           >
             <span className="navbar-toggler-icon"></span>
           </button>
+
           <div className="collapse navbar-collapse" id="navbarNav">
             <ul className="navbar-nav ms-auto">
               <li className="nav-item">
@@ -28,21 +32,34 @@ export default function Layout({ children }) {
                   Catalog
                 </Link>
               </li>
-              <li className="nav-item">
-                <Link href="/bookings" className="nav-link">
-                  Bookings
-                </Link>
-              </li>
-              <li className="nav-item">
-                <Link href="/login" className="nav-link">
-                  Login
-                </Link>
-              </li>
-              <li className="nav-item">
-                <Link href="/signup" className="nav-link">
-                  Signup
-                </Link>
-              </li>
+
+              {isLoggedIn ? (
+                <>
+                  <li className="nav-item">
+                    <Link href="/bookings" className="nav-link">
+                      Bookings
+                    </Link>
+                  </li>
+                  <li className="nav-item">
+                    <button className="btn btn-link nav-link" onClick={logout}>
+                      Logout
+                    </button>
+                  </li>
+                </>
+              ) : (
+                <>
+                  <li className="nav-item">
+                    <Link href="/login" className="nav-link">
+                      Login
+                    </Link>
+                  </li>
+                  <li className="nav-item">
+                    <Link href="/signup" className="nav-link">
+                      Signup
+                    </Link>
+                  </li>
+                </>
+              )}
             </ul>
           </div>
         </div>

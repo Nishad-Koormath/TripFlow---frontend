@@ -20,7 +20,7 @@ export default function BookingForm({ packageId, basePrice }) {
           Authorization: `Bearer ${token}`,
         },
         body: JSON.stringify({
-          package: packageId,
+          package_id: packageId,
           travel_date: travelDate,
           num_people: numPeople,
         }),
