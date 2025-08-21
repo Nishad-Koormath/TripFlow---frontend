@@ -1,11 +1,13 @@
 import { useRouter } from "next/router";
 import { useState } from "react";
+import { useAuth } from "@/contexts/AuthContext";
 
 export default function Login() {
   const [username, setUsername] = useState("");
   const [password, setPassword] = useState("");
   const [error, setError] = useState("");
   const router = useRouter();
+  const { login } = useAuth();
 
   async function handleSubmit(e) {
     e.preventDefault();
@@ -21,10 +23,10 @@ export default function Login() {
       if (!res.ok) throw new Error("Login failed");
       const data = await res.json();
 
-      localStorage.setItem("access", data.access);
+      login(data.access);
       localStorage.setItem("refresh", data.refresh);
 
-      router.push("/catalog");
+      router.push("/");
     } catch (err) {
       setError("Invalid username or password");
     }
