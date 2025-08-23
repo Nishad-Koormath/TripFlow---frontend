@@ -1,12 +1,16 @@
+import { useRouter } from "next/router";
 import { useState } from "react";
+import toast from "react-hot-toast";
 
 export default function BookingForm({ packageId, basePrice }) {
   const [travelDate, setTravelDate] = useState("");
   const [numPeople, setNumPeople] = useState(1);
   const [loading, setLoading] = useState(false);
-  const [success, setSuccess] = useState(null);
 
-  const token = localStorage.getItem("access");
+  const router = useRouter();
+
+  const token =
+    typeof window !== "undefined" ? localStorage.getItem("access") : null;
 
   const handleSubmit = async (e) => {
     e.preventDefault();
@@ -25,13 +29,18 @@ export default function BookingForm({ packageId, basePrice }) {
           num_people: numPeople,
         }),
       });
-      if (!res.ok) throw new Error("Booking failed");
-      setSuccess("Booking successful!");
-      setTravelDate("");
-      setNumPeople(1);
+
+      if (!res.ok) {
+        const errorData = await res.json();
+        console.error("Booking failed:", errorData);
+        throw new Error(errorData.detail || "Booking failed");
+      }
+
+      const data = await res.json();
+      router.push(`/payment/${data.id}`);
     } catch (err) {
       console.error(err);
-      setSuccess("Booking failed. Try again.");
+      toast.error(err.message || "Booking failed. Try again.");
     } finally {
       setLoading(false);
     }
@@ -70,8 +79,6 @@ export default function BookingForm({ packageId, basePrice }) {
       <button type="submit" className="btn btn-success" disabled={loading}>
         {loading ? "Booking..." : "Confirm Booking"}
       </button>
-
-      {success && <p className="mt-3">{success}</p>}
     </form>
   );
 }

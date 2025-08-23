@@ -1,6 +1,31 @@
 import Link from "next/link";
+import { useEffect, useState } from "react";
 
 export default function Home() {
+  const [packages, setPackages] = useState([]);
+  const [loading, setLoading] = useState(true);
+
+  useEffect(() => {
+    async function fetchPackages() {
+      try {
+        const res = await fetch("http://127.0.0.1:8000/api/catalog/packages/");
+        if (!res.ok) throw new Error("Failed to fetch packages");
+        const data = await res.json();
+
+        // handle pagination or array
+        const items = Array.isArray(data) ? data : data.results || [];
+
+        // take last 3 items
+        setPackages(items.slice(-3));
+      } catch (err) {
+        console.error("Error fetching packages:", err);
+      } finally {
+        setLoading(false);
+      }
+    }
+    fetchPackages();
+  }, []);
+
   return (
     <>
       <div className="p-5 mb-4 bg-light rounded-3">
@@ -18,64 +43,54 @@ export default function Home() {
 
       <div className="container my-5">
         <h2 className="mb-4">Featured Packages</h2>
-        <div className="row row-cols-1 row-cols-md-3 g-4">
-          <div className="col">
-            <div className="card h-100 shadow-sm">
-              <img
-                src="https://via.placeholder.com/400x250"
-                className="card-img-top"
-                alt="Beach Paradise"
-              />
-              <div className="card-body">
-                <h5 className="card-title">Beach Paradise</h5>
-                <p className="card-text">
-                  Relax on the golden sands and enjoy crystal-clear waters.
-                </p>
-                <Link href="/catalog" className="btn btn-outline-primary">
-                  View Package
-                </Link>
-              </div>
-            </div>
-          </div>
 
-          <div className="col">
-            <div className="card h-100 shadow-sm">
-              <img
-                src="https://via.placeholder.com/400x250"
-                className="card-img-top"
-                alt="Mountain Adventure"
-              />
-              <div className="card-body">
-                <h5 className="card-title">Mountain Adventure</h5>
-                <p className="card-text">
-                  Hike, climb, and explore breathtaking landscapes.
-                </p>
-                <Link href="/catalog" className="btn btn-outline-primary">
-                  View Package
-                </Link>
+        {loading ? (
+          <p>Loading featured packages...</p>
+        ) : packages.length === 0 ? (
+          <p>No packages available.</p>
+        ) : (
+          <div className="row row-cols-1 row-cols-md-3 g-4">
+            {packages.map((pkg) => (
+              <div className="col" key={pkg.id}>
+                <div className="card h-100 shadow-sm">
+                  {pkg.thumbnail ? (
+                    <img
+                      src={
+                        pkg.thumbnail.startsWith("http")
+                          ? pkg.thumbnail
+                          : `http://127.0.0.1:8000${pkg.thumbnail}`
+                      }
+                      className="card-img-top"
+                      alt={pkg.title}
+                      style={{ height: 200, objectFit: "cover" }}
+                    />
+                  ) : (
+                    <img
+                      src="https://via.placeholder.com/400x250"
+                      className="card-img-top"
+                      alt="placeholder"
+                    />
+                  )}
+                  <div className="card-body">
+                    <h5 className="card-title">{pkg.title}</h5>
+                    <p className="card-text">
+                      {pkg.summery
+                        ? pkg.summery.slice(0, 100)
+                        : "No description"}
+                      ...
+                    </p>
+                    <Link
+                      href={`/catalog/${pkg.id}`}
+                      className="btn btn-outline-primary"
+                    >
+                      View Package
+                    </Link>
+                  </div>
+                </div>
               </div>
-            </div>
+            ))}
           </div>
-
-          <div className="col">
-            <div className="card h-100 shadow-sm">
-              <img
-                src="https://via.placeholder.com/400x250"
-                className="card-img-top"
-                alt="City Explorer"
-              />
-              <div className="card-body">
-                <h5 className="card-title">City Explorer</h5>
-                <p className="card-text">
-                  Discover culture, cuisine, and nightlife in vibrant cities.
-                </p>
-                <Link href="/catalog" className="btn btn-outline-primary">
-                  View Package
-                </Link>
-              </div>
-            </div>
-          </div>
-        </div>
+        )}
       </div>
     </>
   );

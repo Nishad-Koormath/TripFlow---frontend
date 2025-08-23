@@ -1,6 +1,7 @@
 import Link from "next/link";
 import { useRouter } from "next/router";
 import { useEffect, useState } from "react";
+import toast from "react-hot-toast";
 
 export default function PackageDetail() {
   const router = useRouter();
@@ -17,12 +18,12 @@ export default function PackageDetail() {
         const res = await fetch(
           `http://127.0.0.1:8000/api/catalog/packages/${id}/`
         );
-        if (!res.ok) throw new Error("failed to fetch package");
+        if (!res.ok) throw new Error("Failed to fetch package");
         const data = await res.json();
         setPkg(data);
-        console.log("data:", data);
       } catch (err) {
         console.error("Error fetching package:", err);
+        toast.error("Failed to load package. Please try again later.");
       } finally {
         setLoading(false);
       }
@@ -41,7 +42,7 @@ export default function PackageDetail() {
   }
 
   if (!pkg) {
-    return <p className="text-center my-5">Package not found.</p>;
+    return <p className="text-center my-5 text-danger">Package not found.</p>;
   }
 
   return (
@@ -70,7 +71,6 @@ export default function PackageDetail() {
           </p>
           <p className="card-text">{pkg.summery}</p>
 
-          {/* Example: extra fields if available */}
           {pkg.description && (
             <div className="mt-3">
               <h5>About this trip</h5>

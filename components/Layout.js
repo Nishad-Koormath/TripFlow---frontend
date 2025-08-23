@@ -1,8 +1,12 @@
 import Link from "next/link";
 import { useAuth } from "@/contexts/AuthContext";
+import { useRouter } from "next/router";
 
 export default function Layout({ children }) {
   const { isLoggedIn, logout } = useAuth();
+  const router = useRouter();
+
+  const isActive = (path) => router.pathname === path;
 
   return (
     <>
@@ -23,12 +27,20 @@ export default function Layout({ children }) {
           <div className="collapse navbar-collapse" id="navbarNav">
             <ul className="navbar-nav ms-auto">
               <li className="nav-item">
-                <Link href="/" className="nav-link">
+                <Link
+                  href="/"
+                  className={`nav-link ${isActive("/") ? "active" : ""}`}
+                >
                   Home
                 </Link>
               </li>
               <li className="nav-item">
-                <Link href="/catalog" className="nav-link">
+                <Link
+                  href="/catalog"
+                  className={`nav-link ${
+                    router.pathname.startsWith("/catalog") ? "active" : ""
+                  }`}
+                >
                   Catalog
                 </Link>
               </li>
@@ -36,7 +48,12 @@ export default function Layout({ children }) {
               {isLoggedIn ? (
                 <>
                   <li className="nav-item">
-                    <Link href="/bookings" className="nav-link">
+                    <Link
+                      href="/bookings"
+                      className={`nav-link ${
+                        isActive("/bookings") ? "active" : ""
+                      }`}
+                    >
                       Bookings
                     </Link>
                   </li>
@@ -49,12 +66,22 @@ export default function Layout({ children }) {
               ) : (
                 <>
                   <li className="nav-item">
-                    <Link href="/login" className="nav-link">
+                    <Link
+                      href="/login"
+                      className={`nav-link ${
+                        isActive("/login") ? "active" : ""
+                      }`}
+                    >
                       Login
                     </Link>
                   </li>
                   <li className="nav-item">
-                    <Link href="/signup" className="nav-link">
+                    <Link
+                      href="/signup"
+                      className={`nav-link ${
+                        isActive("/signup") ? "active" : ""
+                      }`}
+                    >
                       Signup
                     </Link>
                   </li>

@@ -1,5 +1,6 @@
 import Link from "next/link";
 import { useEffect, useState } from "react";
+import toast from "react-hot-toast";
 
 export default function Catalog() {
   const [packages, setPackages] = useState([]);
@@ -9,11 +10,14 @@ export default function Catalog() {
     async function fetchPackages() {
       try {
         const res = await fetch("http://127.0.0.1:8000/api/catalog/packages/");
-        if (!res.ok) throw new Error("Failed to fetch");
+        if (!res.ok) {
+          throw new Error("Failed to fetch packages");
+        }
         const data = await res.json();
-        setPackages(data.results);
+        setPackages(data.results || data);
       } catch (error) {
         console.error("Error fetching packages:", error);
+        toast.error("Failed to load packages. Please try again later.");
       } finally {
         setLoading(false);
       }
@@ -48,7 +52,7 @@ export default function Catalog() {
                     }
                     className="card-img-top"
                     alt={pkg.title}
-                    style={{ height: 200 }}
+                    style={{ height: 200, objectFit: "cover" }}
                   />
                 ) : (
                   <img
@@ -59,7 +63,10 @@ export default function Catalog() {
                 )}
                 <div className="card-body">
                   <h5 className="card-title">{pkg.title}</h5>
-                  <p className="card-text">{pkg.summery?.slice(0, 100)}...</p>
+                  <p className="card-text">
+                    {pkg.summery ? pkg.summery.slice(0, 100) : "No description"}
+                    ...
+                  </p>
                   <p className="fw-bold">
                     {pkg.base_price} {pkg.currency}
                   </p>

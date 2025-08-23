@@ -1,6 +1,7 @@
 import BookingForm from "@/components/BookingForm";
 import { useRouter } from "next/router";
 import { useEffect, useState } from "react";
+import toast from "react-hot-toast";
 
 export default function NewBooking() {
   const router = useRouter();
@@ -22,6 +23,7 @@ export default function NewBooking() {
         setPkg(data);
       } catch (err) {
         console.error("Error fetching package:", err);
+        toast.error("Failed to load package. Please try again.");
       } finally {
         setLoading(false);
       }
@@ -29,8 +31,15 @@ export default function NewBooking() {
     fetchPackage();
   }, [packageId]);
 
-  if (loading) return <p className="text-center my-5">Loading...</p>;
-  if (!pkg) return <p className="text-center my-5">Package not found.</p>;
+  if (loading)
+    return (
+      <p className="text-center my-5 text-primary">
+        Loading package details...
+      </p>
+    );
+
+  if (!pkg)
+    return <p className="text-center my-5 text-danger">Package not found.</p>;
 
   return (
     <div className="container my-5">

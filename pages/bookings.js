@@ -2,42 +2,62 @@ import { useAuth } from "@/contexts/AuthContext";
 import axios from "axios";
 import { useRouter } from "next/router";
 import { useEffect, useState } from "react";
+import toast from "react-hot-toast";
+
+const API_BASE = "http://127.0.0.1:8000";
 
 export default function MyBookings() {
   const [bookings, setBookings] = useState([]);
-  const [loading, setLoading] = useState(true);
-  const { isLoggedIn } = useAuth();
+  const [actionLoading, setActionLoading] = useState(null);
+  const [pageLoading, setPageLoading] = useState(true);
+  const [pagination, setPagination] = useState({
+    next: null,
+    previous: null,
+    count: 0,
+  });
+
+  const { isLoggedIn, loading } = useAuth();
   const router = useRouter();
 
   useEffect(() => {
-    if (!isLoggedIn) {
-      router.push("/login");
-    }
-  }, [isLoggedIn]);
-
-  useEffect(() => {
-    const fetchBookings = async () => {
-      try {
-        const token = localStorage.getItem("access");
-        const res = await axios.get("http://127.0.0.1:8000/api/bookings/", {
-          headers: {
-            Authorization: `Bearer ${token}`,
-          },
-        });
-        setBookings(res.data.results || res.data);
-      } catch (err) {
-        console.error("Error fetching bookings:", err);
-        if (err.response?.status === 401) {
-          router.push("/login");
-        }
-      } finally {
-        setLoading(false);
+    if (!loading) {
+      if (!isLoggedIn) {
+        router.push("/login");
+      } else {
+        fetchBookings();
       }
-    };
-    fetchBookings();
-  }, []);
+    }
+  }, [isLoggedIn, loading]);
 
-  if (loading) return <p className="text-center">Loading bookings...</p>;
+  const fetchBookings = async (url = `${API_BASE}/api/bookings/`) => {
+    setPageLoading(true);
+    try {
+      const token = localStorage.getItem("access");
+      const res = await axios.get(url, {
+        headers: { Authorization: `Bearer ${token}` },
+      });
+
+      setBookings(res.data.results || res.data);
+      setPagination({
+        next: res.data.next,
+        previous: res.data.previous,
+        count: res.data.count,
+      });
+    } catch (err) {
+      console.error("Error fetching bookings:", err);
+      if (err.response?.status === 401) {
+        router.push("/login");
+      } else {
+        toast.error("Failed to load bookings.");
+      }
+    } finally {
+      setPageLoading(false);
+    }
+  };
+
+  if (loading || pageLoading) {
+    return <p className="text-center">Loading bookings...</p>;
+  }
 
   const getStatusBadge = (status) => {
     switch (status.toLowerCase()) {
@@ -58,85 +78,94 @@ export default function MyBookings() {
       {bookings.length === 0 ? (
         <p className="text-center text-muted">No bookings yet.</p>
       ) : (
-        <div className="row">
-          {bookings.map((booking) => (
-            <div className="col-md-6 mb-4" key={booking.id}>
-              <div className="card shadow-sm h-100">
-                <div className="card-body">
-                  <div className="d-flex justify-content-between align-items-start mb-3">
-                    <h5 className="card-title text-primary">
-                      {booking.package?.title || "Unknown Package"}
-                    </h5>
-                    <span className={getStatusBadge(booking.status)}>
-                      {booking.status}
-                    </span>
-                  </div>
+        <>
+          <div className="row">
+            {bookings.map((booking) => (
+              <div className="col-md-6 mb-4" key={booking.id}>
+                <div className="card shadow-sm h-100">
+                  <div className="card-body">
+                    <div className="d-flex justify-content-between align-items-start mb-3">
+                      <h5 className="card-title text-primary">
+                        {booking.package?.title || "Unknown Package"}
+                      </h5>
+                      <span className={getStatusBadge(booking.status)}>
+                        {booking.status}
+                      </span>
+                    </div>
 
-                  <p className="card-text mb-2">
-                    <strong>Number of People:</strong> {booking.num_people}
-                  </p>
-                  <p className="card-text mb-2">
-                    <strong>Total Price:</strong> ₹{booking.total_price}
-                  </p>
-
-                  {booking.package?.description && (
-                    <p className="text-muted small mb-3">
-                      {booking.package.description}
+                    <p>
+                      <strong>Number of People:</strong> {booking.num_people}
                     </p>
-                  )}
+                    <p>
+                      <strong>Total Price:</strong> ₹{booking.total_price}
+                    </p>
 
-                  <p className="text-muted small">
-                    Booked on:{" "}
-                    {new Date(booking.created_at).toLocaleDateString("en-IN", {
-                      day: "2-digit",
-                      month: "short",
-                      year: "numeric",
-                    })}
-                  </p>
-                  <p className="card-text mb-2">
-                    <strong>Travel Date:</strong>{" "}
-                    {new Date(booking.travel_date).toLocaleDateString("en-IN", {
-                      day: "2-digit",
-                      month: "short",
-                      year: "numeric",
-                    })}
-                  </p>
-                  {booking.status.toLowerCase() === "pending" && (
-                    <button
-                      className="btn btn-sm btn-outline-danger"
-                      onClick={async () => {
-                        try {
-                          await axios.patch(
-                            `http://127.0.0.1:8000/api/bookings/${booking.id}/`,
-                            { status: "cancelled" },
-                            {
-                              headers: {
-                                Authorization: `Bearer ${localStorage.getItem(
-                                  "access"
-                                )}`,
-                              },
-                            }
-                          );
-                          setBookings((prev) =>
-                            prev.map((b) =>
-                              b.id === booking.id
-                                ? { ...b, status: "cancelled" }
-                                : b
-                            )
-                          );
-                        } catch (err) {
-                          console.error("Error cancelling booking:", err);
-                        }
-                      }}
-                    >
-                      Cancel Booking
-                    </button>
-                  )}
+                    {booking.package?.description && (
+                      <p className="text-muted small mb-3">
+                        {booking.package.description}
+                      </p>
+                    )}
+
+                    <p className="text-muted small">
+                      Booked on:{" "}
+                      {new Date(booking.created_at).toLocaleDateString("en-IN")}
+                    </p>
+                    <p>
+                      <strong>Travel Date:</strong>{" "}
+                      {new Date(booking.travel_date).toLocaleDateString(
+                        "en-IN"
+                      )}
+                    </p>
+
+                    {booking.status.toLowerCase() === "pending" && (
+                      <div className="d-flex gap-2 mt-2">
+                        <button
+                          className="btn btn-sm btn-primary"
+                          disabled={actionLoading === booking.id}
+                          onClick={() => handlePayment(booking.id)}
+                        >
+                          {actionLoading === booking.id
+                            ? "Processing..."
+                            : "Pay Now"}
+                        </button>
+                        <button
+                          className="btn btn-sm btn-outline-danger"
+                          disabled={actionLoading === booking.id}
+                          onClick={() => handleCancel(booking.id)}
+                        >
+                          {actionLoading === booking.id
+                            ? "Processing..."
+                            : "Cancel Booking"}
+                        </button>
+                      </div>
+                    )}
+                  </div>
                 </div>
               </div>
-            </div>
-          ))}
-        </div>
+            ))}
+          </div>
+
+          {/* Pagination */}
+          <div className="d-flex justify-content-center mt-4">
+            <button
+              className="btn btn-outline-secondary mx-2"
+              disabled={!pagination.previous}
+              onClick={() => fetchBookings(pagination.previous)}
+            >
+              Previous
+            </button>
+            <button
+              className="btn btn-outline-secondary mx-2"
+              disabled={!pagination.next}
+              onClick={() => fetchBookings(pagination.next)}
+            >
+              Next
+            </button>
+          </div>
+          <p className="text-center text-muted mt-2">
+            Showing {bookings.length} of {pagination.count} bookings
+          </p>
+        </>
       )}
     </div>
   );
