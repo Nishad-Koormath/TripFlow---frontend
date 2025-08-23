@@ -55,6 +55,49 @@ export default function MyBookings() {
     }
   };
 
+  const handleCancel = async (bookingId) => {
+    try {
+      setActionLoading(bookingId);
+      const token = localStorage.getItem("access");
+
+      await axios.patch(
+        `${API_BASE}/api/bookings/${bookingId}/`,
+        { status: "cancelled" },
+        { headers: { Authorization: `Bearer ${token}` } }
+      );
+
+      toast.success("Booking cancelled!");
+      fetchBookings();
+    } catch (err) {
+      console.error("Cancel failed:", err);
+      toast.error("Failed to cancel booking");
+    } finally {
+      setActionLoading(null);
+    }
+  };
+
+  const handlePayment = async (bookingId) => {
+    setActionLoading(bookingId);
+    try {
+      const token = localStorage.getItem("access");
+      const res = await axios.post(
+        `${API_BASE}/api/bookings/${bookingId}/pay/`,
+        {},
+        {
+          headers: { Authorization: `Bearer ${token}` },
+        }
+      );
+
+      toast.success("Payment successful!");
+      router.push(`/thank-you?transaction=${res.data.transaction_id}`);
+    } catch (err) {
+      console.error("Payment error:", err);
+      toast.error("Payment failed. Try again.");
+    } finally {
+      setActionLoading(null);
+    }
+  };
+
   if (loading || pageLoading) {
     return <p className="text-center">Loading bookings...</p>;
   }
@@ -145,7 +188,6 @@ export default function MyBookings() {
             ))}
           </div>
 
-          {/* Pagination */}
           <div className="d-flex justify-content-center mt-4">
             <button
               className="btn btn-outline-secondary mx-2"
