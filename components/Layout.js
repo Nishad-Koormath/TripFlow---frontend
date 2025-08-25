@@ -3,7 +3,7 @@ import { useAuth } from "@/contexts/AuthContext";
 import { useRouter } from "next/router";
 
 export default function Layout({ children }) {
-  const { isLoggedIn, logout } = useAuth();
+  const { isLoggedIn, logout, isAdmin, isStaff } = useAuth();
   const router = useRouter();
 
   const isActive = (path) => router.pathname === path;
@@ -57,6 +57,20 @@ export default function Layout({ children }) {
                       Bookings
                     </Link>
                   </li>
+
+                  {(isAdmin || isStaff) && (
+                    <li className="nav-item">
+                      <Link
+                        href="/admin/dashboard"
+                        className={`nav-link ${
+                          router.pathname.startsWith("/admin") ? "active" : ""
+                        }`}
+                      >
+                        Admin Dashboard
+                      </Link>
+                    </li>
+                  )}
+
                   <li className="nav-item">
                     <button className="btn btn-link nav-link" onClick={logout}>
                       Logout
@@ -68,9 +82,7 @@ export default function Layout({ children }) {
                   <li className="nav-item">
                     <Link
                       href="/login"
-                      className={`nav-link ${
-                        isActive("/login") ? "active" : ""
-                      }`}
+                      className={`nav-link ${isActive("/login") ? "active" : ""}`}
                     >
                       Login
                     </Link>
@@ -78,9 +90,7 @@ export default function Layout({ children }) {
                   <li className="nav-item">
                     <Link
                       href="/signup"
-                      className={`nav-link ${
-                        isActive("/signup") ? "active" : ""
-                      }`}
+                      className={`nav-link ${isActive("/signup") ? "active" : ""}`}
                     >
                       Signup
                     </Link>
